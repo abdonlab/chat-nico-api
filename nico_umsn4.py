@@ -62,7 +62,7 @@ def necesita_internet(pregunta):
 # ------------------ Config ------------------
 st.set_page_config(page_title="Hola soy Nico tu asistente de la UMNSH", page_icon="🎬", layout="wide")
 ROOT = Path(__file__).parent
-VIDEO_DIR = ROOT / "Videos"
+VIDEO_DIR = ROOT / "videos"
 VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 
 # ------------------ Sidebar (modelo) ------------------
