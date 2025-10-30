@@ -84,11 +84,11 @@ top_p = st.sidebar.slider("top_p", 0.05, 1.0, 0.90, 0.05)
 max_tokens = st.sidebar.slider("Máx. tokens", 32, 2048, 200, 16)
 system_prompt = st.sidebar.text_area(
     "System prompt",
-    "Soy NICO, el asistente virtual institucional de la Universidad Michoacana de San Nicolás de Hidalgo (UMSNH).  
-Mi propósito es ayudar a estudiantes, docentes y personal administrativo a resolver dudas académicas, administrativas y tecnológicas de manera clara, rápida y confiable.  
-"
-
-# ------------------ Videos ------------------
+    "System prompt",
+    """Soy NICO, el asistente virtual institucional de la Universidad Michoacana de San Nicolás de Hidalgo (UMSNH).
+Mi propósito es ayudar a estudiantes, docentes y personal administrativo a resolver dudas académicas, administrativas y tecnológicas de manera clara, rápida y confiable.
+Si necesitas información oficial, puedes consultar www.umich.mx."""
+)# ------------------ Videos ------------------
 exts = {".mp4", ".webm", ".ogg", ".ogv"}
 videos = sorted([p for p in VIDEO_DIR.glob("*") if p.suffix.lower() in exts])
 st.sidebar.caption(f"🎥 Videos encontrados: {len(videos)}")
