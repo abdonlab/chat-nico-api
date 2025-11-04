@@ -7,26 +7,22 @@ import streamlit as st
 import threading, time
 #import pyttsx3, threading, time
 import os
-import os
 import streamlit as st
 from dotenv import load_dotenv
-import google.generativeai as genai
 
-# --- Cargar clave API desde entorno o Streamlit Secrets ---
-load_dotenv()  # Carga .env si estás en local
+# --- Conexión directa con Vertex AI ---
+from vertexai import init
+from vertexai.preview.generative_models import GenerativeModel
 
-# 🔹 Primero intenta leer de Secrets, si no, del .env
-API_KEY = st.secrets["GEMINI_API_KEY"] if "GEMINI_API_KEY" in st.secrets else os.getenv("GEMINI_API_KEY")
+# --- Inicializa tu proyecto Vertex AI ---
+init(project="sgc-prompts-umsnh-v1", location="us-central1")
 
-if not API_KEY:
-    st.error("⚠️ No se encontró la clave GEMINI_API_KEY en Secrets o .env")
-    st.stop()
-
-# --- Configura Gemini ---
-genai.configure(api_key=API_KEY)
+# --- Carga el modelo de Vertex AI ---
+model = GenerativeModel("gemini-2.0-flash-lite-001")
 
 # --- Diagnóstico temporal ---
-st.sidebar.success("✅ Clave cargada correctamente desde Secrets o .env")# ------------------ 🔊 Módulo de voz en tiempo real ------------------
+st.sidebar.success("✅ Conectado correctamente con Vertex AI (Gemini 2.0 Flash Lite)")
+# ------------------ 🔊 Módulo de voz en tiempo real ------------------
 def hablar_stream(texto):
     """Habla en tiempo real cada fragmento de texto con pausas naturales."""
     def _voz():
@@ -85,28 +81,35 @@ VIDEO_DIR = ROOT / "videos"
 VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 
 # ------------------ Sidebar (modelo) ------------------
-st.sidebar.header("⚙️ LLM / Google Gemini")
-# API fija de Google Gemini (puedes cambiarla cuando quieras)
-api_key ="AIzaSyD7ndVMuj8kSoHT8BI3QTFeRD6OtQ0qP1M"
-st.sidebar.write("🔒 Usando clave integrada de Google AI Studio")
-model = st.sidebar.selectbox(
+# ------------------ Sidebar (modelo) ------------------
+st.sidebar.header("⚙️ LLM / Google Gemini (Vertex AI)")
+st.sidebar.write("🧠 Conectado al modelo institucional de Vertex AI (sin API pública)")
+
+# Selección de modelo (solo visual, usa Vertex internamente)
+model_name = st.sidebar.selectbox(
     "Modelo",
     [
         "gemini-2.0-flash-lite-001",
-
     ],
     index=0,
 )
+
 temperature = st.sidebar.slider("Temperature", 0.0, 1.5, 0.7, 0.05)
 top_p = st.sidebar.slider("top_p", 0.05, 1.0, 0.90, 0.05)
 max_tokens = st.sidebar.slider("Máx. tokens", 32, 2048, 200, 16)
-system_prompt = st.sidebar.text_area(
-    "System prompt",
-    """Soy NICO, el asistente virtual institucional de la Universidad Michoacana de San Nicolás de Hidalgo (UMSNH).
+
+# --- System Prompt (oculto, no visible en la interfaz) ---
+SYSTEM_PROMPT = """
+Soy NICO, el asistente virtual institucional de la Universidad Michoacana de San Nicolás de Hidalgo (UMSNH).
 Mi propósito es ayudar a estudiantes, docentes y personal administrativo a resolver dudas académicas, administrativas y tecnológicas de manera clara, rápida y confiable.
-Si necesitas información oficial, puedes consultar www.umich.mx."""
-)
-# ------------------ Videos ------------------
+Si necesitas información oficial, puedes consultar www.umich.mx.
+"""
+
+# --- Carga dinámica del modelo Vertex ---
+from vertexai.preview.generative_models import GenerativeModel
+model = GenerativeModel(model_name)
+
+st.sidebar.success(f"✅ Modelo activo en Vertex: {model_name}")# ------------------ Videos ------------------
 exts = {".mp4", ".webm", ".ogg", ".ogv"}
 videos = sorted([p for p in VIDEO_DIR.glob("*") if p.suffix.lower() in exts])
 st.sidebar.caption(f"🎥 Videos encontrados: {len(videos)}")
