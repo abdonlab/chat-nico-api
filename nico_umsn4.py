@@ -7,6 +7,7 @@ import streamlit as st
 import threading, time
 #import pyttsx3, threading, time
 import os
+import os
 import streamlit as st
 from dotenv import load_dotenv
 import google.generativeai as genai
@@ -14,16 +15,18 @@ import google.generativeai as genai
 # --- Cargar clave API desde entorno o Streamlit Secrets ---
 load_dotenv()  # Carga .env si estás en local
 
-# Prioriza Secrets en la nube, luego .env en local
-API_KEY = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY"))
+# 🔹 Primero intenta leer de Secrets, si no, del .env
+API_KEY = st.secrets["GEMINI_API_KEY"] if "GEMINI_API_KEY" in st.secrets else os.getenv("GEMINI_API_KEY")
 
 if not API_KEY:
     st.error("⚠️ No se encontró la clave GEMINI_API_KEY en Secrets o .env")
     st.stop()
 
-# Configura Gemini con tu clave
+# --- Configura Gemini ---
 genai.configure(api_key=API_KEY)
-# ------------------ 🔊 Módulo de voz en tiempo real ------------------
+
+# --- Diagnóstico temporal ---
+st.sidebar.success("✅ Clave cargada correctamente desde Secrets o .env")# ------------------ 🔊 Módulo de voz en tiempo real ------------------
 def hablar_stream(texto):
     """Habla en tiempo real cada fragmento de texto con pausas naturales."""
     def _voz():
