@@ -7,7 +7,19 @@ import streamlit as st
 import threading, time
 #import pyttsx3, threading, time
 import os
+from dotenv import load_dotenv  # 👈 Carga segura de variables desde .env
 
+# ------------------ 🌐 Carga de variables de entorno ------------------
+# Busca automáticamente el archivo .env en la raíz del proyecto
+load_dotenv()
+
+# Obtiene la clave de la API (sin exponerla)
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+# Verifica si la clave está cargada correctamente
+if not GEMINI_API_KEY:
+    st.error("⚠️ No se encontró la variable GEMINI_API_KEY en el archivo .env")
+    st.stop()
 # ------------------ 🔊 Módulo de voz en tiempo real ------------------
 def hablar_stream(texto):
     """Habla en tiempo real cada fragmento de texto con pausas naturales."""
