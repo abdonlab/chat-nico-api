@@ -1,0 +1,6 @@
+# Archivos que no deben subirse
+.env
+*.key
+*.pem
+*.json
+__pycache__/
