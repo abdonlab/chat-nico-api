@@ -66,7 +66,7 @@ def necesita_internet(pregunta):
 st.sidebar.header("⚙️ LLM / Google Gemini API")
 st.sidebar.write("🔒 Conectado mediante API Key segura de Google AI Studio")
 
-api_key = "TU_API_KEY_AQUI"  # 👉 pon aquí tu API Key de AI Studio
+api_key = AIzaSyDeVC_GAH2gSmUOrVlIMs7gVaUbjzlyLEs# 👉 pon aquí tu API Key de AI Studio
 model = st.sidebar.selectbox(
     "Modelo",
     ["gemini-2.0-flash-lite-001", "gemini-1.5-flash"],
