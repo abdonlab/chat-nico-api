@@ -1,6 +1,4 @@
-google-cloud-aiplatform>=1.68.0
-vertexai>=1.68.0
-streamlit>=1.31.0
-python-dotenv
+streamlit
 requests
+python-dotenv
 pyttsx3
