@@ -1,52 +1,36 @@
-import json
-import random
-import base64
+import json, random, base64, requests, threading, time, os
 from pathlib import Path
-import requests
 import streamlit as st
-import threading, time
-#import pyttsx3, threading, time
-import os
-import streamlit as st
+#from pyttsx3 import init as tts_init
 from dotenv import load_dotenv
-
-# --- Conexión directa con Vertex AI ---
 from vertexai import init
 from vertexai.preview.generative_models import GenerativeModel
 
-# --- Inicializa tu proyecto Vertex AI ---
+# --- Inicializa Vertex AI ---
 init(project="sgc-prompts-umsnh-v1", location="us-central1")
 
-# --- Carga el modelo de Vertex AI ---
-model = GenerativeModel("gemini-2.0-flash-lite-001")
-
-# --- Diagnóstico temporal ---
-st.sidebar.success("✅ Conectado correctamente con Vertex AI (Gemini 2.0 Flash Lite)")
 # ------------------ 🔊 Módulo de voz en tiempo real ------------------
 def hablar_stream(texto):
     """Habla en tiempo real cada fragmento de texto con pausas naturales."""
-    def _voz():
-        try:
-            engine = pyttsx3.init()
-            engine.setProperty('rate', 160)
-            voces = engine.getProperty('voices')
-            voz_encontrada = False
-            for voz in voces:
-                if ("spanish-mbrola-2" in voz.id.lower()) or ("mexican-mbrola-1" in voz.id.lower()):
-                    engine.setProperty('voice', voz.id)
-                    voz_encontrada = True
-                    break
-            if not voz_encontrada:
-                engine.setProperty('voice', 'spanish-mbrola-2')
-
-            engine.say(texto)
-            engine.runAndWait()
-            time.sleep(0.4)
-        except Exception as e:
-            print(f"Error de voz: {e}")
-
-    hilo = threading.Thread(target=_voz)
-    hilo.start()
+    try:
+        import pyttsx3
+        def _voz():
+            try:
+                engine = pyttsx3.init()
+                engine.setProperty("rate", 160)
+                voces = engine.getProperty("voices")
+                for voz in voces:
+                    if "spanish" in voz.id.lower():
+                        engine.setProperty("voice", voz.id)
+                        break
+                engine.say(texto)
+                engine.runAndWait()
+                time.sleep(0.3)
+            except Exception as e:
+                print(f"Error de voz: {e}")
+        threading.Thread(target=_voz).start()
+    except Exception as e:
+        print(f"Error inicializando voz: {e}")
 
 # ------------------ 🌐 Búsqueda web inteligente ------------------
 def buscar_en_web(pregunta):
@@ -58,12 +42,10 @@ def buscar_en_web(pregunta):
         data = r.json()
         resumen = data.get("AbstractText", "")
         if not resumen:
-            related = data.get("RelatedTopics", [])
-            if related and isinstance(related, list):
-                for item in related:
-                    if isinstance(item, dict) and item.get("Text"):
-                        resumen = item["Text"]
-                        break
+            for item in data.get("RelatedTopics", []):
+                if isinstance(item, dict) and item.get("Text"):
+                    resumen = item["Text"]
+                    break
         return resumen[:200] if resumen else ""
     except Exception as e:
         print(f"Error en búsqueda web: {e}")
@@ -74,106 +56,74 @@ def necesita_internet(pregunta):
     claves = ["quién es", "último", "actual", "reciente", "hoy", "noticias", "fecha", "presidente", "precio", "clima"]
     return any(palabra in pregunta.lower() for palabra in claves)
 
-# ------------------ Config ------------------
+# ------------------ Configuración general ------------------
 st.set_page_config(page_title="Hola soy Nico tu asistente de la UMNSH", page_icon="🎬", layout="wide")
 ROOT = Path(__file__).parent
 VIDEO_DIR = ROOT / "videos"
 VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 
-# ------------------ Sidebar (modelo) ------------------
-# ------------------ Sidebar (modelo) ------------------
+# ------------------ Sidebar ------------------
 st.sidebar.header("⚙️ LLM / Google Gemini (Vertex AI)")
-st.sidebar.write("🧠 Conectado al modelo institucional de Vertex AI (sin API pública)")
+st.sidebar.write("🧠 Conectado al modelo institucional de Vertex AI")
 
-# Selección de modelo (solo visual, usa Vertex internamente)
-model_name = st.sidebar.selectbox(
-    "Modelo",
-    [
-        "gemini-2.0-flash-lite-001",
-    ],
-    index=0,
-)
-
+model_name = st.sidebar.selectbox("Modelo", ["gemini-2.0-flash-lite-001"], index=0)
 temperature = st.sidebar.slider("Temperature", 0.0, 1.5, 0.7, 0.05)
-top_p = st.sidebar.slider("top_p", 0.05, 1.0, 0.90, 0.05)
+top_p = st.sidebar.slider("top_p", 0.05, 1.0, 0.9, 0.05)
 max_tokens = st.sidebar.slider("Máx. tokens", 32, 2048, 200, 16)
 
-# --- System Prompt (oculto, no visible en la interfaz) ---
 SYSTEM_PROMPT = """
 Soy NICO, el asistente virtual institucional de la Universidad Michoacana de San Nicolás de Hidalgo (UMSNH).
 Mi propósito es ayudar a estudiantes, docentes y personal administrativo a resolver dudas académicas, administrativas y tecnológicas de manera clara, rápida y confiable.
 Si necesitas información oficial, puedes consultar www.umich.mx.
 """
 
-# --- Carga dinámica del modelo Vertex ---
-from vertexai.preview.generative_models import GenerativeModel
 model = GenerativeModel(model_name)
+st.sidebar.success(f"✅ Modelo activo en Vertex: {model_name}")
 
-st.sidebar.success(f"✅ Modelo activo en Vertex: {model_name}")# ------------------ Videos ------------------
+# ------------------ 🎥 Videos ------------------
 exts = {".mp4", ".webm", ".ogg", ".ogv"}
 videos = sorted([p for p in VIDEO_DIR.glob("*") if p.suffix.lower() in exts])
 st.sidebar.caption(f"🎥 Videos encontrados: {len(videos)}")
 
 def pick_video_data_uri(paths):
-    if not paths:
-        return None, None
+    if not paths: return None, None
     p = random.choice(paths)
-    suffix = p.suffix.lower()
-    mime = "video/mp4"
-    if suffix == ".webm":
-        mime = "video/webm"
-    elif suffix in (".ogg", ".ogv"):
-        mime = "video/ogg"
+    mime = {
+        ".mp4": "video/mp4",
+        ".webm": "video/webm",
+        ".ogg": "video/ogg",
+        ".ogv": "video/ogg"
+    }.get(p.suffix.lower(), "video/mp4")
     b64 = base64.b64encode(p.read_bytes()).decode("utf-8")
     return f"data:{mime};base64,{b64}", mime
 
-# ------------------ Cliente de streaming hacia Google AI Studio ------------------
-# ------------------ Cliente de streaming hacia Google AI Studio ------------------
-def stream_gemini(api_key: str, model: str, prompt: str):
-    """Streaming desde Google AI Studio (API Key directa, sin Vertex)."""
-    version = "v1" if "2.0" in model else "v1beta"
-    endpoint = f"https://generativelanguage.googleapis.com/{version}/models/{model}:generateContent?key={api_key}"
-    headers = {"Content-Type": "application/json"}
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "temperature": float(temperature),
-            "topP": float(top_p),
-            "maxOutputTokens": int(max_tokens)
-        }
-    }
-
+# ------------------ Cliente Vertex AI (stream simulado) ------------------
+def stream_vertex(model: GenerativeModel, prompt: str):
+    """Simula respuesta palabra por palabra usando Vertex AI."""
     try:
-        response = requests.post(endpoint, headers=headers, json=payload)
-        if response.status_code != 200:
-            yield {"response": f"⚠️ Error al conectar con Gemini: {response.text}"}
-            yield {"done": True}
-            return
-
-        data = response.json()
-        candidates = data.get("candidates", [])
-        texto = ""
-        if candidates and "content" in candidates[0]:
-            parts = candidates[0]["content"].get("parts", [])
-            for p in parts:
-                texto += p.get("text", "")
-
-        for fragmento in texto.split(" "):
-            yield {"response": fragmento + " "}
+        response = model.generate_content(
+            prompt,
+            generation_config={
+                "temperature": float(temperature),
+                "top_p": float(top_p),
+                "max_output_tokens": int(max_tokens),
+            },
+        )
+        texto = response.text or "⚠️ No se recibió respuesta del modelo."
+        for palabra in texto.split(" "):
+            yield {"response": palabra + " "}
             time.sleep(0.04)
         yield {"done": True}
-
     except Exception as e:
-        yield {"response": f"Error al conectar con Gemini: {e}"}
+        yield {"response": f"⚠️ Error al conectar con Vertex AI: {e}"}
         yield {"done": True}
-# ------------------ UI ------------------
-st.title("Hola, soy Nico tu asistente de la UMNSH")
 
+# ------------------ UI principal ------------------
+st.title("Hola, soy Nico tu asistente de la UMSNH")
 question = st.text_input("Pregunta:", "")
 send = st.button("Enviar")
 
 if send and question.strip():
-    # 🌐 Si necesita Internet
     contexto_web = ""
     if necesita_internet(question):
         contexto_web = buscar_en_web(question)
@@ -182,26 +132,25 @@ if send and question.strip():
 
     data_uri, mime = pick_video_data_uri(videos)
     if data_uri:
-        video_html = f'''
+        st.markdown(f"""
         <div style="display:flex;justify-content:center;margin:10px 0;">
           <video id="encabezadoVideo" width="320" height="180" autoplay loop muted playsinline>
             <source src="{data_uri}" type="{mime}"/>
             Tu navegador no soporta video.
           </video>
         </div>
-        '''
-        st.markdown(video_html, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
     else:
         st.warning("No hay videos en la carpeta 'Videos'. Sube .mp4/.webm/.ogg.")
 
     st.markdown(f"**Tú:** {question}")
 
-    full_prompt = f"{system_prompt}\n\nInstrucción: {question}\n\nInformación web (si aplica): {contexto_web}\n\nassistant:"
+    full_prompt = f"{SYSTEM_PROMPT}\n\nInstrucción: {question}\n\nInformación web (si aplica): {contexto_web}\n\nassistant:"
 
     answer_box = st.empty()
     response_buf = ""
     try:
-        for evt in stream_gemini(api_key, model, full_prompt):
+        for evt in stream_vertex(model, full_prompt):
             chunk = evt.get("response", "")
             if chunk:
                 response_buf += chunk
@@ -212,10 +161,7 @@ if send and question.strip():
     except Exception as e:
         answer_box.error(f"Error: {e}")
     finally:
-        pause_js = '''
-        <script>
-        const v = parent.document.getElementById('encabezadoVideo');
-        if (v) { try { v.pause(); } catch(e){} }
-        </script>
-        '''
-        st.components.v1.html(pause_js, height=0)
+        st.components.v1.html(
+            "<script>const v=parent.document.getElementById('encabezadoVideo');if(v){try{v.pause();}catch(e){}};</script>",
+            height=0,
+        )
