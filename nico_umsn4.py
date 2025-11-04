@@ -7,20 +7,22 @@ import streamlit as st
 import threading, time
 #import pyttsx3, threading, time
 import os
-from dotenv import load_dotenv  # 👈 Carga segura de variables desde .env
+import streamlit as st
+from dotenv import load_dotenv
+import google.generativeai as genai
 
-# ------------------ 🌐 Carga de variables de entorno ------------------
-# Busca automáticamente el archivo .env en la raíz del proyecto
-load_dotenv()
+# --- Cargar clave API desde entorno o Streamlit Secrets ---
+load_dotenv()  # Carga .env si estás en local
 
-# Obtiene la clave de la API (sin exponerla)
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# Prioriza Secrets en la nube, luego .env en local
+API_KEY = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY"))
 
-# Verifica si la clave está cargada correctamente
-if not GEMINI_API_KEY:
-    st.error("⚠️ No se encontró la variable GEMINI_API_KEY en el archivo .env")
+if not API_KEY:
+    st.error("⚠️ No se encontró la clave GEMINI_API_KEY en Secrets o .env")
     st.stop()
 
+# Configura Gemini con tu clave
+genai.configure(api_key=API_KEY)
 # ------------------ 🔊 Módulo de voz en tiempo real ------------------
 def hablar_stream(texto):
     """Habla en tiempo real cada fragmento de texto con pausas naturales."""
