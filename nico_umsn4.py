@@ -160,7 +160,7 @@ if send and question.strip():
             response_buf += chunk
             answer_box.markdown(f"**Nico:** {response_buf}")
             hablar_stream(chunk)
-                if evt.get("done"):
+                        if evt.get("done"):
             # Detener el video cuando la respuesta termina
             pause_js = """
             <script>
