@@ -69,7 +69,7 @@ st.sidebar.write("🔒 Conectado mediante API Key segura de Google AI Studio")
 api_key = st.secrets["GEMINI_API_KEY"]# API Key de AI Studio
 model = st.sidebar.selectbox(
     "Modelo",
-    ["gemini-2.0-flash-lite-001", "gemini-1.5-flash"],
+    ["gemini-2.0-flash-lite-001"],
     index=0,
 )
 temperature = st.sidebar.slider("Temperature", 0.0, 1.5, 0.7, 0.05)
