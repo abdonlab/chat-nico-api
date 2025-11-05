@@ -134,7 +134,8 @@ send = st.button("Enviar")
 
 if send and question.strip():
     contexto_web = buscar_en_web(question) if necesita_internet(question) else ""
-    if contexto_web: st.success("🌐 Se obtuvo información adicional de la web.")
+    if contexto_web:
+        st.success("🌐 Se obtuvo información adicional de la web.")
 
     data_uri, mime = pick_video_data_uri(videos)
     if data_uri:
@@ -160,7 +161,8 @@ if send and question.strip():
             response_buf += chunk
             answer_box.markdown(f"**Nico:** {response_buf}")
             hablar_stream(chunk)
-                        if evt.get("done"):
+
+        if evt.get("done"):
             # Detener el video cuando la respuesta termina
             pause_js = """
             <script>
