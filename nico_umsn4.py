@@ -169,12 +169,10 @@ if send and question.strip():
 
         if evt.get("done"):
             # ------------------ 🧠 Pausar el video actual ------------------
-          if evt.get("done"):
-            # ------------------ 🧠 Reemplazar el video actual por el de espera ------------------
+        # ------------------ 🎬 Reemplazar el video actual por el de espera (mismo contenedor) ------------------
             video_espera = VIDEO_DIR / "esperandorespuesta.mp4"
             if video_espera.exists():
                 b64_espera = base64.b64encode(video_espera.read_bytes()).decode("utf-8")
-                # CSS para eliminar bordes negros y mantenerlo centrado
                 st.markdown(f"""
                 <style>
                 #video-container {{
@@ -191,19 +189,14 @@ if send and question.strip():
                 }}
                 </style>
 
-                <div id="video-container">
-                    <video id="espera-video" autoplay loop muted playsinline>
-                        <source src="data:video/mp4;base64,{b64_espera}" type="video/mp4"/>
-                    </video>
-                </div>
-
                 <script>
-                // Reemplazar el video anterior por el de espera
-                const oldVid = parent.document.querySelector('video');
-                if (oldVid) {{
-                    oldVid.src = "data:video/mp4;base64,{b64_espera}";
-                    oldVid.load();
-                    oldVid.play();
+                const mainContainer = parent.document.querySelector('#video-container video');
+                if (mainContainer) {{
+                    mainContainer.src = "data:video/mp4;base64,{b64_espera}";
+                    mainContainer.loop = true;
+                    mainContainer.muted = true;
+                    mainContainer.autoplay = true;
+                    mainContainer.play();
                 }}
                 </script>
                 """, unsafe_allow_html=True)
@@ -211,4 +204,3 @@ if send and question.strip():
                 st.warning("⚠️ No se encontró el video 'esperandorespuesta.mp4' en la carpeta /videos.")
 
             break
-
