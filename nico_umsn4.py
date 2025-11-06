@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 # ------------------ Configuración inicial ------------------
 st.set_page_config(page_title="Hola soy Nico tu asistente de la UMNSH", page_icon="🎬", layout="wide")
-ROOT = Path(_file_).parent
+ROOT = Path(__file__).parent
 VIDEO_DIR = ROOT / "videos"
 VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 
