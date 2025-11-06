@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 # ------------------ Configuración inicial ------------------
 st.set_page_config(page_title="Hola soy Nico tu asistente de la UMNSH", page_icon="🎬", layout="wide")
-ROOT = Path(__file__).parent
+ROOT = Path(_file_).parent
 VIDEO_DIR = ROOT / "videos"
 VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -66,7 +66,7 @@ def necesita_internet(pregunta):
 st.sidebar.header("⚙️ LLM / Google Gemini API")
 st.sidebar.write("🔒 Conectado mediante API Key segura de Google AI Studio")
 
-api_key = st.secrets["GEMINI_API_KEY"]  # API Key de AI Studio
+api_key = st.secrets["GEMINI_API_KEY"]# API Key de AI Studio
 model = st.sidebar.selectbox(
     "Modelo",
     ["gemini-2.0-flash-lite-001"],
@@ -89,8 +89,7 @@ videos = sorted([p for p in VIDEO_DIR.glob("*") if p.suffix.lower() in exts])
 st.sidebar.caption(f"🎥 Videos encontrados: {len(videos)}")
 
 def pick_video_data_uri(paths):
-    if not paths:
-        return None, None
+    if not paths: return None, None
     p = random.choice(paths)
     mime = "video/mp4" if p.suffix.lower() == ".mp4" else "video/webm"
     b64 = base64.b64encode(p.read_bytes()).decode("utf-8")
@@ -103,11 +102,7 @@ def stream_gemini(api_key: str, model: str, prompt: str):
     headers = {"Content-Type": "application/json"}
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "temperature": float(temperature),
-            "topP": float(top_p),
-            "maxOutputTokens": int(max_tokens),
-        },
+        "generationConfig": {"temperature": float(temperature), "topP": float(top_p), "maxOutputTokens": int(max_tokens)},
     }
 
     try:
@@ -154,7 +149,7 @@ if send and question.strip():
     else:
         st.warning("No hay videos en la carpeta 'videos'.")
 
-    st.markdown(f"**Tú:** {question}")
+    st.markdown(f"*Tú:* {question}")
     full_prompt = f"{SYSTEM_PROMPT}\n\nUsuario: {question}\n\nContexto web: {contexto_web}"
 
     answer_box = st.empty()
@@ -164,43 +159,16 @@ if send and question.strip():
         chunk = evt.get("response", "")
         if chunk:
             response_buf += chunk
-            answer_box.markdown(f"**Nico:** {response_buf}")
+            answer_box.markdown(f"*Nico:* {response_buf}")
             hablar_stream(chunk)
 
         if evt.get("done"):
-            # ------------------ 🧠 Pausar el video actual ------------------
-        # ------------------ 🎬 Reemplazar el video actual por el de espera (mismo contenedor) ------------------
-            video_espera = VIDEO_DIR / "esperandorespuesta.mp4"
-            if video_espera.exists():
-                b64_espera = base64.b64encode(video_espera.read_bytes()).decode("utf-8")
-                st.markdown(f"""
-                <style>
-                #video-container {{
-                    display: flex;
-                    justify-content: center;
-                    margin: 10px 0;
-                }}
-                #video-container video {{
-                    border-radius: 12px;
-                    background: transparent !important;
-                    object-fit: cover;
-                    width: 320px;
-                    height: 180px;
-                }}
-                </style>
-
-                <script>
-                const mainContainer = parent.document.querySelector('#video-container video');
-                if (mainContainer) {{
-                    mainContainer.src = "data:video/mp4;base64,{b64_espera}";
-                    mainContainer.loop = true;
-                    mainContainer.muted = true;
-                    mainContainer.autoplay = true;
-                    mainContainer.play();
-                }}
-                </script>
-                """, unsafe_allow_html=True)
-            else:
-                st.warning("⚠️ No se encontró el video 'esperandorespuesta.mp4' en la carpeta /videos.")
-
+            # Detener el video cuando la respuesta termina
+            pause_js = """
+            <script>
+            const v = parent.document.querySelector('video');
+            if (v) { v.pause(); v.currentTime = 0; }
+            </script>
+            """
+            st.components.v1.html(pause_js, height=0)
             break
