@@ -169,24 +169,43 @@ if send and question.strip():
 
         if evt.get("done"):
             # ------------------ 🧠 Pausar el video actual ------------------
-            pause_js = """
-            <script>
-            const v = parent.document.querySelector('video');
-            if (v) { v.pause(); v.currentTime = 0; }
-            </script>
-            """
-            st.components.v1.html(pause_js, height=0)
-
-            # ------------------ 🎬 Reproducir video "esperandorespuesta.mp4" ------------------
+          if evt.get("done"):
+            # ------------------ 🧠 Reemplazar el video actual por el de espera ------------------
             video_espera = VIDEO_DIR / "esperandorespuesta.mp4"
             if video_espera.exists():
                 b64_espera = base64.b64encode(video_espera.read_bytes()).decode("utf-8")
+                # CSS para eliminar bordes negros y mantenerlo centrado
                 st.markdown(f"""
-                <div id='espera-container' style='display:flex;justify-content:center;margin-top:15px;'>
-                    <video id='espera-video' width='320' height='180' autoplay loop muted playsinline>
-                        <source src='data:video/mp4;base64,{b64_espera}' type='video/mp4'/>
+                <style>
+                #video-container {{
+                    display: flex;
+                    justify-content: center;
+                    margin: 10px 0;
+                }}
+                #video-container video {{
+                    border-radius: 12px;
+                    background: transparent !important;
+                    object-fit: cover;
+                    width: 320px;
+                    height: 180px;
+                }}
+                </style>
+
+                <div id="video-container">
+                    <video id="espera-video" autoplay loop muted playsinline>
+                        <source src="data:video/mp4;base64,{b64_espera}" type="video/mp4"/>
                     </video>
                 </div>
+
+                <script>
+                // Reemplazar el video anterior por el de espera
+                const oldVid = parent.document.querySelector('video');
+                if (oldVid) {{
+                    oldVid.src = "data:video/mp4;base64,{b64_espera}";
+                    oldVid.load();
+                    oldVid.play();
+                }}
+                </script>
                 """, unsafe_allow_html=True)
             else:
                 st.warning("⚠️ No se encontró el video 'esperandorespuesta.mp4' en la carpeta /videos.")
