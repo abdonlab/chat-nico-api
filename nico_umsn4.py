@@ -66,7 +66,7 @@ def necesita_internet(pregunta):
 st.sidebar.header("⚙️ LLM / Google Gemini API")
 st.sidebar.write("🔒 Conectado mediante API Key segura de Google AI Studio")
 
-api_key = st.secrets["GEMINI_API_KEY"]# API Key de AI Studio
+api_key = st.secrets["GEMINI_API_KEY"]  # API Key de AI Studio
 model = st.sidebar.selectbox(
     "Modelo",
     ["gemini-2.0-flash-lite-001"],
@@ -89,7 +89,8 @@ videos = sorted([p for p in VIDEO_DIR.glob("*") if p.suffix.lower() in exts])
 st.sidebar.caption(f"🎥 Videos encontrados: {len(videos)}")
 
 def pick_video_data_uri(paths):
-    if not paths: return None, None
+    if not paths:
+        return None, None
     p = random.choice(paths)
     mime = "video/mp4" if p.suffix.lower() == ".mp4" else "video/webm"
     b64 = base64.b64encode(p.read_bytes()).decode("utf-8")
@@ -102,7 +103,11 @@ def stream_gemini(api_key: str, model: str, prompt: str):
     headers = {"Content-Type": "application/json"}
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": float(temperature), "topP": float(top_p), "maxOutputTokens": int(max_tokens)},
+        "generationConfig": {
+            "temperature": float(temperature),
+            "topP": float(top_p),
+            "maxOutputTokens": int(max_tokens),
+        },
     }
 
     try:
@@ -163,7 +168,7 @@ if send and question.strip():
             hablar_stream(chunk)
 
         if evt.get("done"):
-            # Detener el video cuando la respuesta termina
+            # ------------------ 🧠 Pausar el video actual ------------------
             pause_js = """
             <script>
             const v = parent.document.querySelector('video');
@@ -171,4 +176,20 @@ if send and question.strip():
             </script>
             """
             st.components.v1.html(pause_js, height=0)
+
+            # ------------------ 🎬 Reproducir video "esperandorespuesta.mp4" ------------------
+            video_espera = VIDEO_DIR / "esperandorespuesta.mp4"
+            if video_espera.exists():
+                b64_espera = base64.b64encode(video_espera.read_bytes()).decode("utf-8")
+                st.markdown(f"""
+                <div id='espera-container' style='display:flex;justify-content:center;margin-top:15px;'>
+                    <video id='espera-video' width='320' height='180' autoplay loop muted playsinline>
+                        <source src='data:video/mp4;base64,{b64_espera}' type='video/mp4'/>
+                    </video>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.warning("⚠️ No se encontró el video 'esperandorespuesta.mp4' en la carpeta /videos.")
+
             break
+
