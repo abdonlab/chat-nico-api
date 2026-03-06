@@ -127,7 +127,7 @@ def stream_gemini(api_key: str, model: str, prompt: str):
         yield {"done": True}
 
 # ------------------ Interfaz principal ------------------
-st.title("Hola soy tu asitente universitario")
+st.title("")
 
 question = st.text_input("Pregunta:")
 send = st.button("Enviar")
