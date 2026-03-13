@@ -5,12 +5,34 @@ from pathlib import Path
 import requests
 import streamlit as st
 import threading, time
-#import pyttsx3, threading, time
 import os
 from dotenv import load_dotenv
 
 # ------------------ Configuración inicial ------------------
-st.set_page_config(page_title="Hola soy tu asitente Universitario", page_icon="🎬", layout="wide")
+st.set_page_config(page_title="Hola soy tu asistente Universitario", page_icon="🎬", layout="wide")
+
+# ✅ QUITAR ESPACIO SUPERIOR Y AJUSTAR LAYOUT
+st.markdown("""
+<style>
+  /* Elimina el padding/margin superior de Streamlit */
+  .block-container {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+  /* Oculta el header vacío de Streamlit */
+  header[data-testid="stHeader"] {
+    display: none !important;
+  }
+  /* Oculta el menú de hamburguesa y el footer */
+  #MainMenu { visibility: hidden; }
+  footer { visibility: hidden; }
+  /* Reduce el gap entre elementos */
+  .stTextInput, .stButton {
+    margin-top: 0.3rem !important;
+  }
+</style>
+""", unsafe_allow_html=True)
+
 ROOT = Path(__file__).parent
 VIDEO_DIR = ROOT / "videos"
 VIDEO_DIR.mkdir(parents=True, exist_ok=True)
@@ -66,7 +88,7 @@ def necesita_internet(pregunta):
 st.sidebar.header("⚙️ LLM / Google Gemini API")
 st.sidebar.write("🔒 Conectado mediante API Key segura de Google AI Studio")
 
-api_key = st.secrets["GEMINI_API_KEY"]# API Key de AI Studio
+api_key = st.secrets["GEMINI_API_KEY"]
 model = st.sidebar.selectbox(
     "Modelo",
     ["gemini-2.0-flash-lite-001"],
@@ -76,11 +98,11 @@ temperature = st.sidebar.slider("Temperature", 0.0, 1.5, 0.7, 0.05)
 top_p = st.sidebar.slider("top_p", 0.05, 1.0, 0.90, 0.05)
 max_tokens = st.sidebar.slider("Máx. tokens", 32, 2048, 200, 16)
 
-# --- Prompt del sistema (oculto, no visible) ---
+# --- Prompt del sistema ---
 SYSTEM_PROMPT = """
 Soy NICO, el asistente virtual institucional de la Universidad Michoacana de San Nicolás de Hidalgo (UMSNH).
 Mi propósito es ayudar a estudiantes, docentes y personal administrativo a resolver dudas académicas, administrativas y tecnológicas de manera clara, rápida y confiable.
-Si necesitas información oficial, puedes consultar www.umich.mx. la rectora de la UMSNH es Yarabí Ávila González. 
+Si necesitas información oficial, puedes consultar www.umich.mx. La rectora de la UMSNH es Yarabí Ávila González.
 """
 
 # ------------------ Videos ------------------
@@ -102,7 +124,11 @@ def stream_gemini(api_key: str, model: str, prompt: str):
     headers = {"Content-Type": "application/json"}
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": float(temperature), "topP": float(top_p), "maxOutputTokens": int(max_tokens)},
+        "generationConfig": {
+            "temperature": float(temperature),
+            "topP": float(top_p),
+            "maxOutputTokens": int(max_tokens)
+        },
     }
 
     try:
@@ -163,7 +189,6 @@ if send and question.strip():
             hablar_stream(chunk)
 
         if evt.get("done"):
-            # Detener el video cuando la respuesta termina
             pause_js = """
             <script>
             const v = parent.document.querySelector('video');
