@@ -11,37 +11,51 @@ from dotenv import load_dotenv
 # ------------------ Configuración inicial ------------------
 st.set_page_config(page_title="Hola soy tu asistente Universitario", page_icon="🎬", layout="wide")
 
-# ✅ QUITAR ESPACIO SUPERIOR — CSS agresivo
+# ✅ QUITAR ESPACIO SUPERIOR — método directo con JS + CSS
 st.markdown("""
 <style>
-  /* Elimina TODOS los espacios superiores */
-  .main > div:first-child { padding-top: 0 !important; }
-  .block-container {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-    margin-top: 0 !important;
-  }
-  /* Oculta el header invisible de Streamlit */
-  header, header[data-testid="stHeader"] {
-    height: 0 !important;
-    min-height: 0 !important;
-    display: none !important;
-  }
-  /* Elimina el div spacer que Streamlit inyecta */
-  div[data-testid="stAppViewBlockContainer"] {
-    padding-top: 0.5rem !important;
-  }
-  div[data-testid="stVerticalBlock"] > div:first-child {
-    margin-top: 0 !important;
+  /* Reset completo de todos los contenedores */
+  * { box-sizing: border-box; }
+  .main .block-container,
+  .block-container,
+  div[data-testid="stAppViewBlockContainer"],
+  div[data-testid="stMain"],
+  section[data-testid="stSidebar"] ~ div,
+  .main > div {
     padding-top: 0 !important;
+    margin-top:  0 !important;
   }
-  /* Oculta menú y footer */
-  #MainMenu { visibility: hidden; }
-  footer { visibility: hidden; }
-  /* Reduce gap entre input y botón */
-  .stTextInput { margin-top: 0 !important; }
-  .stButton { margin-top: 0.2rem !important; }
+  /* Header completamente eliminado */
+  header[data-testid="stHeader"],
+  header { display: none !important; height: 0 !important; }
+  #MainMenu, footer { visibility: hidden !important; height: 0 !important; }
+
+  /* Forzar con JS via style tag */
 </style>
+<script>
+  // Espera a que cargue el DOM y elimina padding
+  function fixPadding() {
+    const targets = [
+      document.querySelector('.block-container'),
+      document.querySelector('[data-testid="stAppViewBlockContainer"]'),
+      document.querySelector('[data-testid="stMain"]'),
+      document.querySelector('.main'),
+    ];
+    targets.forEach(el => {
+      if (el) {
+        el.style.paddingTop = '0.3rem';
+        el.style.marginTop  = '0';
+      }
+    });
+    const header = document.querySelector('header');
+    if (header) header.style.display = 'none';
+  }
+  // Ejecutar inmediatamente y de nuevo después de que Streamlit termine de renderizar
+  fixPadding();
+  setTimeout(fixPadding, 300);
+  setTimeout(fixPadding, 800);
+  setTimeout(fixPadding, 1500);
+</script>
 """, unsafe_allow_html=True)
 
 ROOT = Path(__file__).parent
@@ -164,7 +178,8 @@ def stream_gemini(api_key: str, model: str, prompt: str):
         yield {"done": True}
 
 # ------------------ Interfaz principal ------------------
-st.title("")
+# Colapsa el espacio reservado para el título
+st.markdown('<style>div[data-testid="stVerticalBlock"]{gap:0.3rem;}</style>', unsafe_allow_html=True)
 
 question = st.text_input("Pregunta:")
 send = st.button("Enviar")
