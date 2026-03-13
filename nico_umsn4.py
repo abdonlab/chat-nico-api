@@ -11,25 +11,36 @@ from dotenv import load_dotenv
 # ------------------ Configuración inicial ------------------
 st.set_page_config(page_title="Hola soy tu asistente Universitario", page_icon="🎬", layout="wide")
 
-# ✅ QUITAR ESPACIO SUPERIOR Y AJUSTAR LAYOUT
+# ✅ QUITAR ESPACIO SUPERIOR — CSS agresivo
 st.markdown("""
 <style>
-  /* Elimina el padding/margin superior de Streamlit */
+  /* Elimina TODOS los espacios superiores */
+  .main > div:first-child { padding-top: 0 !important; }
   .block-container {
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    margin-top: 0 !important;
   }
-  /* Oculta el header vacío de Streamlit */
-  header[data-testid="stHeader"] {
+  /* Oculta el header invisible de Streamlit */
+  header, header[data-testid="stHeader"] {
+    height: 0 !important;
+    min-height: 0 !important;
     display: none !important;
   }
-  /* Oculta el menú de hamburguesa y el footer */
+  /* Elimina el div spacer que Streamlit inyecta */
+  div[data-testid="stAppViewBlockContainer"] {
+    padding-top: 0.5rem !important;
+  }
+  div[data-testid="stVerticalBlock"] > div:first-child {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+  /* Oculta menú y footer */
   #MainMenu { visibility: hidden; }
   footer { visibility: hidden; }
-  /* Reduce el gap entre elementos */
-  .stTextInput, .stButton {
-    margin-top: 0.3rem !important;
-  }
+  /* Reduce gap entre input y botón */
+  .stTextInput { margin-top: 0 !important; }
+  .stButton { margin-top: 0.2rem !important; }
 </style>
 """, unsafe_allow_html=True)
 
